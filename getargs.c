@@ -21,17 +21,17 @@
  */
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_NONSTDC_NO_WARNINGS
-#include "dirent.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <agon/mos.h>
 #ifdef _MSC_VER
 #include <conio.h>
 #else
-#include <unistd.h>
+//#include <unistd.h>
 
 #endif
 #ifndef _MAX_PATH
@@ -137,19 +137,19 @@ char **_getargs(char *_str, char *_name) {
             strcpy(pattern, ap);
             *ap      = 0;
 
-            DIR *dir = opendir(*buf ? buf : ".");
-            if (dir) {
-                struct dirent *entry;
-                while ((entry = readdir(dir))) {
-                    if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-                        if (match(pattern, entry->d_name)) {
-                            argbuf[argc] = alloc(ap - buf + strlen(entry->d_name) + 1);
+            DIR dir_handle;
+            FILINFO fil_handle;
+            if (ffs_dopen(&dir_handle, *buf ? buf : ".") == FR_OK) {
+                while (ffs_dread(&dir_handle, &fil_handle) == FR_OK && fil_handle.fname[0] != 0) {
+                    if (strcmp(fil_handle.fname, ".") && strcmp(fil_handle.fname, "..")) {
+                        if (match(pattern, fil_handle.fname)) {
+                            argbuf[argc] = alloc(ap - buf + strlen(fil_handle.fname) + 1);
                             strcpy(argbuf[argc], buf);
-                            strcat(argbuf[argc++], entry->d_name);
+                            strcat(argbuf[argc++], fil_handle.fname);
                         }
                     }
                 }
-                closedir(dir);
+                ffs_dclose(&dir_handle);
 
             } else
                 error(buf, pattern, ": no match", 0);
@@ -170,7 +170,7 @@ char **_getargs(char *_str, char *_name) {
 /* modified to allow arbitary line length */
 static char nxtch() {
     if (interactive && *str == '\\' && str[1] == 0) {
-        if (isatty(fileno(stdin)))
+        if (/*isatty(fileno(stdin))*/ true) // always assume stdin is a terminal for Z80 MOS
             fprintf(stderr, "%s> ", name);
         size_t cnt = 0;
         int c;

@@ -90,8 +90,8 @@ static UConst char sccsid[] = "@(#)cpp.c	1.54 21/05/30 2010-2021 J. Schilling";
 #include <unixio.h>
 #define O_RDONLY 0
 #else
-#include <fcntl.h>
-#include <unistd.h>
+//#include <fcntl.h>
+//#include <unistd.h>
 #endif
 #endif
 
@@ -366,6 +366,11 @@ size_t afread(void *ptr, size_t count, FILE *stream) {
 STATIC void sayline() {
     if (pflag == 0)
         fprintf(fout, "# %d \"%s\"\n", lineno[ifno], fnames[ifno]);
+}
+
+static char* getenv(char* key) {
+    /* stub implementation for AGON dev */
+    return NULL;
 }
 
 /*
